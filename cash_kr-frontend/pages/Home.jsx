@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 // ─── Icons ───────────────────────────────────────────────────────────────────
 
@@ -119,6 +119,9 @@ const REVIEWS = [
   { name: "Disha Doshi", text: "Value for money and service is good. Got the exact price that was shown online.", stars: 5 },
   { name: "pawan mishra", text: "Excellent services! The pickup was too good and the security and checking purposes were professional.", stars: 5 },
   { name: "Mayank Doshi", text: "Very prompt service and got a very good price. Absolutely hassle-free. Highly recommended!", stars: 5 },
+  { name: "Ritu Sharma", text: "Super easy process. Got a great price for my old Samsung. Will definitely use again!", stars: 5 },
+  { name: "Aakash Mehta", text: "Loved the transparent pricing. No last minute deductions. Payment received in under 10 minutes.", stars: 5 },
+  { name: "Priya Nair", text: "The pickup agent was very professional and courteous. Got ₹2,000 more than other platforms quoted.", stars: 5 },
 ];
 
 const FAQS = [
@@ -141,13 +144,139 @@ const GUARANTEES = [
 
 const CITIES = ["Mumbai", "Delhi", "Bangalore", "Hyderabad", "Chennai", "Pune", "Kolkata", "Ahmedabad", "Noida", "Thane", "Navi Mumbai", "Goa", "Coimbatore", "Ghaziabad", "Howrah"];
 
+// ─── Vertical Scrolling Reviews Column ───────────────────────────────────────
+
+function ReviewColumn({ reviews, duration, reverse = false }) {
+  const trackRef = useRef(null);
+  const animationRef = useRef(null);
+  const positionRef = useRef(reverse ? -50 : 0); // start at -50% for reverse
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+
+    const speed = 0.02; // percent per ms
+    let lastTime = null;
+    let paused = false;
+
+    const step = (timestamp) => {
+      if (paused) { animationRef.current = requestAnimationFrame(step); return; }
+      if (!lastTime) lastTime = timestamp;
+      const delta = timestamp - lastTime;
+      lastTime = timestamp;
+
+      if (reverse) {
+        positionRef.current += speed * delta;
+        if (positionRef.current >= 0) positionRef.current = -50;
+      } else {
+        positionRef.current -= speed * delta;
+        if (positionRef.current <= -50) positionRef.current = 0;
+      }
+
+      track.style.transform = `translateY(${positionRef.current}%)`;
+      animationRef.current = requestAnimationFrame(step);
+    };
+
+    animationRef.current = requestAnimationFrame(step);
+
+    const handleEnter = () => { paused = true; };
+    const handleLeave = () => { paused = false; lastTime = null; };
+    track.addEventListener("mouseenter", handleEnter);
+    track.addEventListener("mouseleave", handleLeave);
+
+    return () => {
+      cancelAnimationFrame(animationRef.current);
+      track.removeEventListener("mouseenter", handleEnter);
+      track.removeEventListener("mouseleave", handleLeave);
+    };
+  }, [reverse]);
+
+  // Duplicate reviews for seamless loop
+  const doubled = [...reviews, ...reviews];
+
+  return (
+    <div style={{ overflow: "hidden", height: "480px", position: "relative" }}>
+      {/* Fade top */}
+      <div style={{
+        position: "absolute", top: 0, left: 0, right: 0, height: "80px",
+        background: "linear-gradient(to bottom, #f9fafb, transparent)",
+        zIndex: 2, pointerEvents: "none"
+      }} />
+      {/* Fade bottom */}
+      <div style={{
+        position: "absolute", bottom: 0, left: 0, right: 0, height: "80px",
+        background: "linear-gradient(to top, #f9fafb, transparent)",
+        zIndex: 2, pointerEvents: "none"
+      }} />
+
+      <div ref={trackRef} style={{ willChange: "transform" }}>
+        {doubled.map((r, i) => (
+          <div key={i} style={{
+            background: "#fff",
+            border: "1px solid #f0f0f0",
+            borderRadius: "14px",
+            padding: "22px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+            marginBottom: "16px",
+            cursor: "default",
+            transition: "box-shadow 0.2s, border-color 0.2s",
+          }}
+            onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 6px 20px rgba(5,101,230,0.10)"; e.currentTarget.style.borderColor = "#D4E1FF"; }}
+            onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)"; e.currentTarget.style.borderColor = "#f0f0f0"; }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+              <div style={{
+                width: "38px", height: "38px", borderRadius: "50%",
+                background: "#0565E6", color: "#fff",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: "14px", fontWeight: 700, flexShrink: 0
+              }}>
+                {r.name[0].toUpperCase()}
+              </div>
+              <div>
+                <div style={{ fontSize: "14px", fontWeight: 600, color: "#111" }}>{r.name}</div>
+                <div style={{ display: "flex", gap: "2px", marginTop: "2px" }}>
+                  {Array.from({ length: 5 }).map((_, si) => (
+                    <StarIcon key={si} filled={si < r.stars} />
+                  ))}
+                </div>
+              </div>
+            </div>
+            <p style={{ fontSize: "13px", color: "#6b7280", lineHeight: 1.65, margin: 0 }}>{r.text}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Reviews Section with 3-column vertical scroll ───────────────────────────
+
+// Split reviews into 3 columns
+function splitIntoColumns(arr, cols) {
+  const columns = Array.from({ length: cols }, () => []);
+  arr.forEach((item, i) => columns[i % cols].push(item));
+  return columns;
+}
+
+function ReviewsMarquee({ reviews }) {
+  const cols = splitIntoColumns(reviews, 3);
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px" }}>
+      {cols.map((col, i) => (
+        <ReviewColumn key={i} reviews={col} reverse={i === 1} />
+      ))}
+    </div>
+  );
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function SectionTitle({ tag, title, subtitle }) {
   return (
     <div style={{ textAlign: "center", marginBottom: "48px" }}>
       {tag && (
-        <span style={{ display: "inline-block", background: "#f0fdf4", color: "#10b981", fontSize: "12px", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", padding: "4px 14px", borderRadius: "20px", marginBottom: "12px" }}>
+        <span style={{ display: "inline-block", background: "#EFF2FF", color: "#0565E6", fontSize: "12px", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", padding: "4px 14px", borderRadius: "20px", marginBottom: "12px" }}>
           {tag}
         </span>
       )}
@@ -160,17 +289,15 @@ function SectionTitle({ tag, title, subtitle }) {
 function FAQItem({ q, a }) {
   const [open, setOpen] = useState(false);
   return (
-    <div style={{ borderBottom: "1px solid #f0f0f0" }}>
+    <div style={{ borderBottom: "1px solid #dcdcdc", background: "#f5f5f5", borderRadius: "12px", marginBottom: "14px", padding: "0 24px" }}>
       <button
         onClick={() => setOpen((v) => !v)}
-        style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 0", background: "none", border: "none", cursor: "pointer", textAlign: "left", gap: "16px" }}
+        style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "28px 0", background: "none", border: "none", cursor: "pointer", textAlign: "left", gap: "16px" }}
       >
-        <span style={{ fontSize: "15px", fontWeight: 600, color: "#111", fontFamily: "inherit" }}>{q}</span>
-        <span style={{ flexShrink: 0, color: "#10b981" }}><ChevronIcon open={open} /></span>
+        <span style={{ fontSize: "18px", fontWeight: 600, color: "#111", fontFamily: "inherit" }}>{q}</span>
+        <span style={{ flexShrink: 0, color: "#0565E6" }}><ChevronIcon open={open} /></span>
       </button>
-      {open && (
-        <p style={{ fontSize: "14px", color: "#6b7280", lineHeight: 1.7, paddingBottom: "18px", margin: 0 }}>{a}</p>
-      )}
+      {open && <p style={{ fontSize: "15px", color: "#6b7280", lineHeight: 1.8, paddingBottom: "24px", margin: 0 }}>{a}</p>}
     </div>
   );
 }
@@ -182,6 +309,7 @@ export default function HomePage() {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
+
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html, body { font-family: 'DM Sans', sans-serif; color: #111; background: #fff; overflow-x: hidden; width: 100%; }
         .hp-page { font-family: 'DM Sans', sans-serif; overflow-x: hidden; width: 100%; }
@@ -190,99 +318,103 @@ export default function HomePage() {
         .hp-section-alt { background: #f9fafb; }
 
         /* ── Referral Banner ── */
-        .referral-bar { background: #f0fdf4; border-bottom: 1px solid #d1fae5; padding: 10px 32px; text-align: center; font-size: 13px; color: #065f46; overflow-x: hidden; width: 100%; }
-        .referral-bar a { color: #10b981; font-weight: 700; text-decoration: none; margin-left: 6px; }
+        .referral-bar { background: #EFF2FF; border-bottom: 1px solid #D4E1FF; padding: 10px 32px; text-align: center; font-size: 13px; color: #0456B8; overflow-x: hidden; width: 100%; }
+        .referral-bar a { color: #0565E6; font-weight: 700; text-decoration: none; margin-left: 6px; }
         .referral-bar a:hover { text-decoration: underline; }
 
         /* ── Hero ── */
-        .hero { background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f8faff 100%); padding: 64px 32px 72px; overflow-x: hidden; width: 100%; }
+        .hero { background: linear-gradient(135deg, #EFF2FF 0%, #F0F4FF 50%, #f8faff 100%); padding: 64px 32px 72px; overflow-x: hidden; width: 100%; }
         .hero-inner { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
-        .hero-tag { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #d1fae5; border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 600; color: #10b981; letter-spacing: 0.5px; margin-bottom: 20px; }
-        .hero-tag::before { content: ""; width: 8px; height: 8px; background: #10b981; border-radius: 50%; }
+        .hero-tag { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #D4E1FF; border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 600; color: #0565E6; letter-spacing: 0.5px; margin-bottom: 20px; }
+        .hero-tag::before { content: ""; width: 8px; height: 8px; background: #0565E6; border-radius: 50%; }
         .hero-h1 { font-size: clamp(28px, 4vw, 48px); font-weight: 800; color: #111; line-height: 1.15; letter-spacing: -0.5px; margin-bottom: 18px; }
-        .hero-h1 span { color: #10b981; }
+        .hero-h1 span { color: #0565E6; }
         .hero-sub { font-size: 16px; color: #6b7280; line-height: 1.65; margin-bottom: 32px; max-width: 480px; }
-        .hero-cats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 36px; }
-        .hero-cat-card { display: flex; align-items: center; gap: 12px; background: #fff; border: 1.5px solid #e5e7eb; border-radius: 12px; padding: 14px 16px; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; text-decoration: none; color: inherit; }
-        .hero-cat-card:hover { border-color: #10b981; box-shadow: 0 4px 16px rgba(16,185,129,0.1); }
-        .hero-cat-icon { width: 44px; height: 44px; background: #f0fdf4; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #10b981; flex-shrink: 0; }
-        .hero-cat-label { font-size: 14px; font-weight: 700; color: #111; }
-        .hero-cat-sub { font-size: 12px; color: #9ca3af; margin-top: 2px; }
+
+        /* Hero Categories */
+        .hero-cats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 40px; }
+        .hero-cat-card { display: flex; align-items: center; gap: 18px; background: #fff; border: 1.5px solid #e5e7eb; border-radius: 18px; padding: 24px; cursor: pointer; transition: all 0.25s ease; text-decoration: none; color: inherit; min-height: 120px; box-shadow: 0 4px 14px rgba(0,0,0,0.04); position: relative; overflow: hidden; }
+        .hero-cat-card::before { content: ""; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(5,101,230,0.03), rgba(5,101,230,0)); opacity: 0; transition: opacity 0.25s ease; }
+        .hero-cat-card:hover::before { opacity: 1; }
+        .hero-cat-card:hover { border-color: #0565E6; transform: translateY(-4px); box-shadow: 0 12px 30px rgba(5,101,230,0.12); }
+        .hero-cat-icon { width: 72px; height: 72px; background: #EFF2FF; border-radius: 18px; display: flex; align-items: center; justify-content: center; color: #0565E6; flex-shrink: 0; transition: all 0.25s ease; }
+        .hero-cat-card:hover .hero-cat-icon { background: #0565E6; color: #fff; transform: scale(1.05); }
+        .hero-cat-label { font-size: 24px; font-weight: 700; color: #111; margin-bottom: 6px; line-height: 1.2; }
+        .hero-cat-sub { font-size: 15px; color: #6b7280; line-height: 1.5; font-weight: 500; }
+
+        /* Hero Stats */
         .hero-stats { display: flex; gap: 28px; flex-wrap: wrap; }
-        .hero-stat {}
-        .hero-stat-val { font-size: 22px; font-weight: 800; color: #10b981; }
+        .hero-stat-val { font-size: 22px; font-weight: 800; color: #0565E6; }
         .hero-stat-label { font-size: 12px; color: #9ca3af; font-weight: 500; }
 
-        /* Hero Right — visual placeholder grid */
+        /* Hero Right */
         .hero-right { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; gap: 12px; }
         .hero-card { background: #fff; border-radius: 16px; padding: 20px; border: 1px solid #f0f0f0; box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
-        .hero-card-green { background: #10b981; color: #fff; }
+        .hero-card-green { background: #0565E6; color: #fff; }
         .hero-card-dark { background: #111827; color: #fff; grid-column: 1 / -1; }
         .hero-card-label { font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; opacity: 0.7; margin-bottom: 6px; }
         .hero-card-val { font-size: 28px; font-weight: 800; }
         .hero-card-sub { font-size: 13px; opacity: 0.75; margin-top: 4px; }
         .hero-card-dark-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
         .hero-card-dark-stat { text-align: center; }
-        .hero-card-dark-stat-val { font-size: 20px; font-weight: 800; color: #10b981; }
+        .hero-card-dark-stat-val { font-size: 20px; font-weight: 800; color: #0565E6; }
         .hero-card-dark-stat-label { font-size: 11px; color: #9ca3af; }
 
         /* ── How It Works ── */
         .how-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
         .how-step { text-align: center; padding: 32px 24px; background: #fff; border-radius: 16px; border: 1px solid #f0f0f0; box-shadow: 0 2px 12px rgba(0,0,0,0.04); position: relative; }
-        .how-step-num { width: 48px; height: 48px; background: #10b981; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; margin: 0 auto 20px; }
+        .how-step-num { width: 48px; height: 48px; background: #0565E6; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; margin: 0 auto 20px; }
         .how-step-title { font-size: 16px; font-weight: 700; color: #111; margin-bottom: 10px; }
-        .how-step-desc { font-size: 14px; color: "#6b7280"; line-height: 1.6; }
-        .how-connector { position: absolute; right: -18px; top: 50%; transform: translateY(-50%); color: #d1fae5; z-index: 1; }
+        .how-step-desc { font-size: 14px; color: #6b7280; line-height: 1.6; }
+        .how-connector { position: absolute; right: -18px; top: 40px; color: #0565E6; z-index: 1; }
 
         /* ── Trust ── */
         .trust-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
         .trust-card { display: flex; gap: 16px; background: #fff; border: 1px solid #f0f0f0; border-radius: 14px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
-        .trust-icon { width: 48px; height: 48px; background: #f0fdf4; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #10b981; flex-shrink: 0; }
+        .trust-icon { width: 48px; height: 48px; background: #EFF2FF; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #0565E6; flex-shrink: 0; }
         .trust-title { font-size: 15px; font-weight: 700; color: #111; margin-bottom: 6px; }
         .trust-desc { font-size: 13px; color: #6b7280; line-height: 1.6; }
 
         /* ── Calculator ── */
         .calc-stats { display: flex; justify-content: center; gap: 48px; margin-bottom: 48px; }
-        .calc-stat { text-align: center; }
-        .calc-stat-val { font-size: 32px; font-weight: 800; color: #10b981; }
-        .calc-stat-label { font-size: 13px; color: "#6b7280"; }
+        .calc-stat-val { font-size: 32px; font-weight: 800; color: #0565E6; }
+        .calc-stat-label { font-size: 13px; color: #6b7280; }
         .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
         .calc-card { background: #fff; border: 1.5px solid #e5e7eb; border-radius: 14px; padding: 24px 20px; text-align: center; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; }
-        .calc-card:hover { border-color: #10b981; box-shadow: 0 4px 16px rgba(16,185,129,0.1); }
-        .calc-card-icon { width: 52px; height: 52px; background: #f0fdf4; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #10b981; margin: 0 auto 14px; }
+        .calc-card:hover { border-color: #0565E6; box-shadow: 0 4px 16px rgba(5,101,230,0.1); }
+        .calc-card-icon { width: 52px; height: 52px; background: #EFF2FF; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #0565E6; margin: 0 auto 14px; }
         .calc-card-label { font-size: 15px; font-weight: 700; color: #111; margin-bottom: 6px; }
         .calc-card-desc { font-size: 12px; color: #9ca3af; line-height: 1.5; margin-bottom: 16px; }
-        .calc-card-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #10b981; background: none; border: none; cursor: pointer; font-family: inherit; }
+        .calc-card-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #0565E6; background: none; border: none; cursor: pointer; font-family: inherit; }
 
-        /* ── Reviews ── */
-        .reviews-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-        .review-card { background: #fff; border: 1px solid #f0f0f0; border-radius: 14px; padding: 22px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
-        .review-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-        .review-avatar { width: 38px; height: 38px; border-radius: 50%; background: #10b981; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; }
-        .review-name { font-size: 14px; font-weight: 600; color: #111; }
-        .review-stars { display: flex; gap: 2px; margin-top: 2px; }
-        .review-text { font-size: 13px; color: "#6b7280"; line-height: 1.65; }
+        /* ── Reviews Marquee Section ── */
+        .reviews-marquee-section { background: #f9fafb; }
+        .reviews-summary-bar { display: flex; justify-content: center; align-items: center; gap: 36px; margin-bottom: 48px; flex-wrap: wrap; }
+        .rsb-item { display: flex; align-items: center; gap: 10px; }
+        .rsb-val { font-size: 28px; font-weight: 800; color: #0565E6; }
+        .rsb-label { font-size: 13px; color: #6b7280; }
+        .rsb-divider { width: 1px; height: 40px; background: #e5e7eb; }
 
         /* ── Trust Score ── */
         .trust-score-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; text-align: center; }
-        .ts-val { font-size: 36px; font-weight: 800; color: #10b981; }
-        .ts-label { font-size: 13px; color: "#6b7280"; margin-top: 4px; }
+        .ts-val { font-size: 36px; font-weight: 800; color: #0565E6; }
+        .ts-label { font-size: 13px; color: #6b7280; margin-top: 4px; }
 
         /* ── Guarantees ── */
         .guarantee-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
         .guarantee-item { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #f0f0f0; border-radius: 10px; padding: 14px 16px; font-size: 14px; font-weight: 500; color: #111; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
-        .guarantee-check { width: 20px; height: 20px; background: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #fff; font-size: 11px; }
+        .guarantee-check { width: 20px; height: 20px; background: #0565E6; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #fff; font-size: 11px; }
 
         /* ── Cities ── */
         .cities-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; justify-content: center; }
         .cities-tab { padding: 7px 16px; border-radius: 20px; border: 1.5px solid #e5e7eb; background: #fff; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; color: #555; transition: all 0.15s; }
-        .cities-tab.active, .cities-tab:hover { border-color: #10b981; background: #f0fdf4; color: #10b981; font-weight: 600; }
+        .cities-tab.active, .cities-tab:hover { border-color: #0565E6; background: #EFF2FF; color: #0565E6; font-weight: 600; }
         .cities-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
-        .city-chip { padding: 8px 16px; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 13px; color: #444; cursor: pointer; transition: all 0.15s; }
-        .city-chip:hover { border-color: #10b981; color: #10b981; background: #f0fdf4; }
+        .city-chip { padding: 8px 16px; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 13px; color: #444; cursor: pointer; transition: all 0.15s; text-decoration: none; display: inline-block; }
+        .city-chip:hover { border-color: #0565E6; color: #0565E6; background: #EFF2FF; }
 
         /* ── App Download ── */
-        .app-section { background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 64px 32px; text-align: center; color: #fff; overflow-x: hidden; width: 100%; }
+        .app-section { background: linear-gradient(135deg, #0565E6 0%, #0450C5 100%); padding: 64px 32px; text-align: center; color: #fff; overflow-x: hidden; width: 100%; }
         .app-section h2 { font-size: clamp(22px, 3vw, 32px); font-weight: 800; margin-bottom: 12px; }
         .app-section p { font-size: 15px; opacity: 0.85; margin-bottom: 32px; }
         .app-features { display: flex; justify-content: center; gap: 28px; flex-wrap: wrap; margin-bottom: 36px; }
@@ -304,23 +436,33 @@ export default function HomePage() {
           .how-steps { grid-template-columns: 1fr; }
           .trust-grid { grid-template-columns: 1fr; }
           .calc-grid { grid-template-columns: 1fr 1fr; }
-          .reviews-grid { grid-template-columns: 1fr 1fr; }
           .trust-score-grid { grid-template-columns: 1fr 1fr; gap: 20px; }
           .guarantee-list { grid-template-columns: 1fr 1fr; }
         }
+
+        @media (max-width: 700px) {
+          .reviews-3col { grid-template-columns: 1fr !important; }
+          .reviews-3col > div:nth-child(2),
+          .reviews-3col > div:nth-child(3) { display: none; }
+        }
+
         @media (max-width: 600px) {
           .hp-container { padding: 0 16px; }
           .hero { padding: 40px 16px 52px; }
           .referral-bar { padding: 8px 16px; font-size: 12px; }
           .app-section { padding: 48px 16px; }
-          .hero-cats { grid-template-columns: 1fr 1fr; }
+          .hero-cats { grid-template-columns: 1fr; gap: 16px; }
+          .hero-cat-card { padding: 20px; min-height: auto; }
+          .hero-cat-icon { width: 60px; height: 60px; }
+          .hero-cat-label { font-size: 20px; }
+          .hero-cat-sub { font-size: 14px; }
           .hero-stats { gap: 20px; }
           .calc-grid { grid-template-columns: 1fr 1fr; }
-          .reviews-grid { grid-template-columns: 1fr; }
           .guarantee-list { grid-template-columns: 1fr; }
           .trust-score-grid { grid-template-columns: 1fr 1fr; }
           .calc-stats { gap: 24px; }
           .hp-section { padding: 40px 0; }
+          .rsb-divider { display: none; }
         }
       `}</style>
 
@@ -335,7 +477,6 @@ export default function HomePage() {
         {/* ── Hero Section ── */}
         <section className="hero">
           <div className="hero-inner">
-            {/* Left */}
             <div>
               <div className="hero-tag">India's #1 Device Buyback Platform</div>
               <h1 className="hero-h1">
@@ -345,8 +486,6 @@ export default function HomePage() {
               <p className="hero-sub">
                 YourBrand is India's online device buyback platform helping you sell old electronics with fair pricing, free doorstep pickup and instant payment.
               </p>
-
-              {/* Device Category Cards */}
               <div className="hero-cats">
                 {DEVICE_CATEGORIES.map((cat) => (
                   <a href="#" key={cat.label} className="hero-cat-card">
@@ -358,8 +497,6 @@ export default function HomePage() {
                   </a>
                 ))}
               </div>
-
-              {/* Stats */}
               <div className="hero-stats">
                 {STATS.map((s) => (
                   <div key={s.label} className="hero-stat">
@@ -370,7 +507,6 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Right — Info Cards */}
             <div className="hero-right">
               <div className="hero-card hero-card-green">
                 <div className="hero-card-label">Today's Best Price</div>
@@ -406,7 +542,6 @@ export default function HomePage() {
           </div>
         </section>
 
-
         {/* ── How It Works ── */}
         <section className="hp-section">
           <div className="hp-container">
@@ -417,12 +552,12 @@ export default function HomePage() {
             />
             <div className="how-steps">
               {HOW_STEPS.map((step, i) => (
-                <div key={step.num} className="how-step" style={{ position: "relative" }}>
+                <div key={step.num} className="how-step">
                   <div className="how-step-num">{step.num}</div>
                   <div className="how-step-title">{step.title}</div>
-                  <p className="how-step-desc" style={{ fontSize: "14px", color: "#6b7280", lineHeight: 1.6 }}>{step.desc}</p>
+                  <p className="how-step-desc">{step.desc}</p>
                   {i < HOW_STEPS.length - 1 && (
-                    <div className="how-connector" style={{ position: "absolute", right: "-18px", top: "40px", color: "#10b981" }}>
+                    <div className="how-connector">
                       <ArrowRightIcon />
                     </div>
                   )}
@@ -463,13 +598,13 @@ export default function HomePage() {
               subtitle="Our smart calculator evaluates your device model, condition, storage variant, and market demand for a transparent and fair price estimate."
             />
             <div className="calc-stats">
-              <div className="calc-stat">
+              <div className="calc-stat" style={{ textAlign: "center" }}>
                 <div className="calc-stat-val">5,000+</div>
-                <div className="calc-stat-label" style={{ color: "#6b7280", fontSize: "13px" }}>Supported Devices</div>
+                <div className="calc-stat-label">Supported Devices</div>
               </div>
-              <div className="calc-stat">
+              <div className="calc-stat" style={{ textAlign: "center" }}>
                 <div className="calc-stat-val">10,000+</div>
-                <div className="calc-stat-label" style={{ color: "#6b7280", fontSize: "13px" }}>Daily Calculations</div>
+                <div className="calc-stat-label">Daily Calculations</div>
               </div>
             </div>
             <div className="calc-grid">
@@ -487,30 +622,43 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── Reviews ── */}
-        <section className="hp-section hp-section-alt">
+        {/* ── Reviews — Vertical Scroll Marquee ── */}
+        <section className="hp-section reviews-marquee-section">
           <div className="hp-container">
             <SectionTitle
               tag="Customer Reviews"
               title="Real Feedback From Our Customers"
               subtitle="Thousands of users across India trust YourBrand to convert their old phones into instant cash with free pickup and transparent pricing."
             />
-            <div className="reviews-grid">
-              {REVIEWS.map((r) => (
-                <div key={r.name} className="review-card">
-                  <div className="review-top">
-                    <div className="review-avatar">{r.name[0].toUpperCase()}</div>
-                    <div>
-                      <div className="review-name">{r.name}</div>
-                      <div className="review-stars">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <StarIcon key={i} filled={i < r.stars} />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  <p className="review-text" style={{ color: "#6b7280" }}>{r.text}</p>
+
+            {/* Summary bar */}
+            <div className="reviews-summary-bar">
+              <div className="rsb-item">
+                <div>
+                  <div className="rsb-val">4.8 ★</div>
+                  <div className="rsb-label">Average Rating</div>
                 </div>
+              </div>
+              <div className="rsb-divider" />
+              <div className="rsb-item">
+                <div>
+                  <div className="rsb-val">50K+</div>
+                  <div className="rsb-label">Happy Customers</div>
+                </div>
+              </div>
+              <div className="rsb-divider" />
+              <div className="rsb-item">
+                <div>
+                  <div className="rsb-val">98%</div>
+                  <div className="rsb-label">Recommend Us</div>
+                </div>
+              </div>
+            </div>
+
+            {/* 3-column vertical scrolling marquee */}
+            <div className="reviews-3col" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px" }}>
+              {splitIntoColumns(REVIEWS, 3).map((col, i) => (
+                <ReviewColumn key={i} reviews={col} reverse={i === 1} />
               ))}
             </div>
           </div>
@@ -533,7 +681,7 @@ export default function HomePage() {
               ].map((s) => (
                 <div key={s.label} style={{ textAlign: "center", padding: "28px", background: "#f9fafb", borderRadius: "14px", border: "1px solid #f0f0f0" }}>
                   <div className="ts-val">{s.val}</div>
-                  <div className="ts-label" style={{ color: "#6b7280", fontSize: "13px", marginTop: "4px" }}>{s.label}</div>
+                  <div className="ts-label">{s.label}</div>
                 </div>
               ))}
             </div>
