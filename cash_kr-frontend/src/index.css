@@ -1,1 +1,66 @@
 @import "tailwindcss";
+
+@theme {
+  --color-primary: #16A34A;
+  --color-primary-dark: #15803D;
+  --color-primary-light: #F0FDF4;
+  --color-cash-green: #16A34A;
+  --color-cash-green-light: #F0FDF4;
+  --color-border-light: #D4E1FF;
+  --color-text-primary: #111;
+  --color-text-muted: #6b7280;
+  --color-border: #e5e7eb;
+  --color-bg-alt: #f9fafb;
+  --font-sans: 'DM Sans', sans-serif;
+}
+
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  html, body {
+    font-family: var(--font-sans);
+    color: var(--color-text-primary);
+    background: #fff;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  body { margin: 0; }
+}
+
+/* Animated price counter */
+@keyframes priceFlash {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); color: #16A34A; }
+  100% { transform: scale(1); }
+}
+.price-animate {
+  animation: priceFlash 0.4s ease;
+}
+
+/* Checkmark animation */
+@keyframes checkDraw {
+  0% { stroke-dashoffset: 100; }
+  100% { stroke-dashoffset: 0; }
+}
+@keyframes scaleIn {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.check-animate-circle {
+  animation: scaleIn 0.5s ease forwards;
+}
+.check-animate-path {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: checkDraw 0.5s ease 0.3s forwards;
+}
+
+/* Scrollbar styles */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
