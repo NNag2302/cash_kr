@@ -25,6 +25,7 @@ const orderSchema = new mongoose.Schema({
     bodyCondition: String,
     hasOtherIssues: Boolean,
     functionalIssues: [String],
+    batteryHealth: String,
     accessories: [String],
   },
   priceBreakdown: {
@@ -32,6 +33,7 @@ const orderSchema = new mongoose.Schema({
     conditionAdjustment: { type: Number, default: 0 },
     screenAdjustment: { type: Number, default: 0 },
     functionalDeduction: { type: Number, default: 0 },
+    batteryDeduction: { type: Number, default: 0 },
     accessoriesBonus: { type: Number, default: 0 },
     finalPrice: { type: Number, default: 0 },
   },

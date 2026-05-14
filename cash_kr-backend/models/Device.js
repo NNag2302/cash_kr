@@ -44,11 +44,16 @@ const deviceSchema = new mongoose.Schema({
     crackedWorks: { type: Number, default: 0.75 },
     crackedBroken: { type: Number, default: 0.50 },
   },
+  batteryDeductions: {
+    above80: { type: Number, default: 0 },
+    above60: { type: Number, default: 1000 },
+    below60: { type: Number, default: 2500 },
+  },
   functionalDeductions: {
     batteryLow: { type: Number, default: 2000 },
     cameraIssue: { type: Number, default: 3000 },
     speakerIssue: { type: Number, default: 1500 },
-    faceIdIssue: { type: Number, default: 4000 },
+    biometricIssue: { type: Number, default: 4000 },
     chargingIssue: { type: Number, default: 1000 },
   },
   accessoriesBonus: {

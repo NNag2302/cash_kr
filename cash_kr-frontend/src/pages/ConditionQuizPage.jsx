@@ -66,6 +66,8 @@ export default function ConditionQuizPage() {
   }, [slug]);
 
   // Recalculate price on selection change
+  const [batteryHealth, setBatteryHealth] = useState('above80');
+
   useEffect(() => {
     if (!device) return;
     const variant = device.variants[0]; // For now using first variant
@@ -76,9 +78,11 @@ export default function ConditionQuizPage() {
       condition: bodyCondition === 'Good' ? 'good' : (bodyCondition === 'Average' ? 'fair' : 'poor'),
       screenCondition: hasScreenIssue ? 'crackedWorks' : 'noScratch',
       functionalIssues: otherIssues,
+      batteryHealth,
       accessories: selectedAccessories.length === 3 ? 'fullKit' : (selectedAccessories.includes('Box') ? 'boxOnly' : 'none'),
       conditionMultipliers: device.conditionMultipliers,
       screenMultipliers: device.screenMultipliers,
+      batteryDeductions: device.batteryDeductions,
       functionalDeductions: device.functionalDeductions,
       accessoriesBonus: device.accessoriesBonus,
     });
@@ -701,7 +705,7 @@ const OTHER_ISSUES_DATA = {
     { id: 'bend', label: 'Bend Device', icon: '〰️' },
   ],
   'Technical Issues': [
-    { id: 'face_id', label: 'Face ID Problem', icon: '👤' },
+    { id: 'biometricIssue', label: 'Face ID / Fingerprint Problem', icon: '👤' },
     { id: 'restart', label: 'Restart Problem', icon: '🔄' },
     { id: 'sensors', label: 'Sensors Problem', icon: '📡' },
     { id: 'front_camera', label: 'Front Camera', icon: '📸' },
@@ -714,7 +718,7 @@ const OTHER_ISSUES_DATA = {
     { id: 'network', label: 'Network Problem', icon: '📡' },
     { id: 'vibration', label: 'Vibration Problem', icon: '📳' },
     { id: 'charging', label: 'Charging Problem', icon: '🔌' },
-    { id: 'battery', label: 'Battery/Service Problem', icon: '🔋' },
+    { id: 'batteryLow', label: 'Battery/Service Problem', icon: '🔋' },
     { id: 'motherboard', label: 'Motherboard Problem', icon: '🗂️' },
   ]
 };
