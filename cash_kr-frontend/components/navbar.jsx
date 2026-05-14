@@ -1,25 +1,22 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 const NAV_ITEMS = [
   {
     label: "Mobile",
-    hasDropdown: true,
-    items: ["Samsung", "Apple", "OnePlus", "Xiaomi", "Realme", "Vivo", "Oppo"],
+    hasDropdown: false,
   },
   {
     label: "Tablet",
-    hasDropdown: true,
-    items: ["iPad", "Samsung Tab", "Lenovo Tab", "OnePlus Pad"],
+    hasDropdown: false,
   },
   {
     label: "Laptop",
-    hasDropdown: true,
-    items: ["Dell", "HP", "Lenovo", "Apple MacBook", "Asus", "Acer"],
+    hasDropdown: false,
   },
   {
     label: "Mac",
-    hasDropdown: true,
-    items: ["MacBook Air", "MacBook Pro", "Mac Mini", "iMac"],
+    hasDropdown: false,
   },
   { label: "Corporate", hasDropdown: false },
   { label: "Calculator", hasDropdown: false },
@@ -148,7 +145,7 @@ export default function Navbar() {
           gap: 2px;
         }
         .logo-chevrons {
-          color: #10b981;
+          color: #0565E6;
           font-size: 22px;
           font-weight: 900;
           letter-spacing: -4px;
@@ -180,7 +177,7 @@ export default function Navbar() {
           transition: border-color 0.2s, background 0.2s;
         }
         .navbar-search input:focus {
-          border-color: #10b981;
+          border-color: #0565E6;
           background: #fff;
         }
         .navbar-search input::placeholder { color: #aaa; }
@@ -198,7 +195,7 @@ export default function Navbar() {
           padding: 0;
           transition: color 0.2s;
         }
-        .search-btn:hover { color: #10b981; }
+        .search-btn:hover { color: #0565E6; }
 
         /* Right Actions */
         .navbar-actions {
@@ -221,10 +218,11 @@ export default function Navbar() {
           padding: 8px 12px;
           border-radius: 8px;
           transition: background 0.15s, color 0.15s;
+          text-decoration: none;
         }
-        .btn-login:hover { background: #f4f4f4; color: #10b981; }
+        .btn-login:hover { background: #f4f4f4; color: #0565E6; }
         .btn-download {
-          background: #10b981;
+          background: #0565E6;
           color: #fff;
           border: none;
           cursor: pointer;
@@ -238,7 +236,7 @@ export default function Navbar() {
           transition: background 0.2s, transform 0.1s;
           white-space: nowrap;
         }
-        .btn-download:hover { background: #0da271; transform: translateY(-1px); }
+        .btn-download:hover { background: #0450C5; transform: translateY(-1px); }
         .btn-download:active { transform: translateY(0); }
 
         /* Bottom Nav */
@@ -274,7 +272,7 @@ export default function Navbar() {
           white-space: nowrap;
           transition: color 0.15s, background 0.15s;
         }
-        .nav-item-btn:hover { color: #10b981; background: #f0fdf8; }
+        .nav-item-btn:hover { color: #0565E6; background: #EFF2FF; }
         .nav-item-btn.active {
           color: #111;
           font-weight: 700;
@@ -317,7 +315,7 @@ export default function Navbar() {
           width: 100%;
           text-align: left;
         }
-        .dropdown-item:hover { background: #f0fdf8; color: #10b981; font-weight: 500; }
+        .dropdown-item:hover { background: #EFF2FF; color: #0565E6; font-weight: 500; }
 
         /* Mobile Hamburger */
         .hamburger-btn {
@@ -389,7 +387,7 @@ export default function Navbar() {
           border-bottom: 1px solid #f7f7f7;
         }
         .mobile-nav-btn:hover { background: #f9f9f9; }
-        .mobile-nav-btn.active { color: #10b981; font-weight: 700; }
+        .mobile-nav-btn.active { color: #0565E6; font-weight: 700; }
         .mobile-dropdown {
           background: #f9fdfb;
           border-bottom: 1px solid #f0f0f0;
@@ -407,7 +405,7 @@ export default function Navbar() {
           width: 100%;
           text-align: left;
         }
-        .mobile-dropdown-item:hover { color: #10b981; }
+        .mobile-dropdown-item:hover { color: #0565E6; }
         .mobile-actions {
           display: flex;
           flex-direction: column;
@@ -429,10 +427,11 @@ export default function Navbar() {
           color: #333;
           cursor: pointer;
           transition: border-color 0.2s, color 0.2s;
+          text-decoration: none;
         }
-        .mobile-btn-login:hover { border-color: #10b981; color: #10b981; }
+        .mobile-btn-login:hover { border-color: #0565E6; color: #0565E6; }
         .mobile-btn-download {
-          background: #10b981;
+          background: #0565E6;
           color: #fff;
           border: none;
           border-radius: 10px;
@@ -445,7 +444,7 @@ export default function Navbar() {
           cursor: pointer;
           transition: background 0.2s;
         }
-        .mobile-btn-download:hover { background: #0da271; }
+        .mobile-btn-download:hover { background: #0450C5; }
 
         /* Responsive */
         @media (max-width: 900px) {
@@ -480,10 +479,10 @@ export default function Navbar() {
 
           {/* Actions */}
           <div className="navbar-actions">
-            <button className="btn-login">
+            <Link to="/login" className="btn-login">
               <UserIcon />
               Login
-            </button>
+            </Link>
             <button className="btn-download">DOWNLOAD APP</button>
             <button
               className="hamburger-btn"
@@ -572,9 +571,9 @@ export default function Navbar() {
           ))}
 
           <div className="mobile-actions">
-            <button className="mobile-btn-login">
+            <Link to="/login" className="mobile-btn-login">
               <UserIcon /> Login
-            </button>
+            </Link>
             <button className="mobile-btn-download">DOWNLOAD APP</button>
           </div>
         </div>

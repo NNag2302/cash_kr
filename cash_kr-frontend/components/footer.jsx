@@ -2,7 +2,7 @@ import "./footer.css";
 
 const FooterLogo = () => (
   <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-    <span style={{ color: "#10b981", fontSize: "24px", fontWeight: 900, letterSpacing: "-4px", lineHeight: 1 }}>«</span>
+    <span style={{ color: "#0565E6", fontSize: "24px", fontWeight: 900, letterSpacing: "-4px", lineHeight: 1 }}>«</span>
     <span style={{ fontSize: "22px", fontWeight: 700, color: "#fff", letterSpacing: "-0.5px" }}>YourBrand</span>
   </div>
 );
