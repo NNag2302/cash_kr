@@ -25,7 +25,10 @@ export default function SchedulePickupPage() {
   const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
-  const [paymentMethod, setPaymentMethod] = useState('cash');
+  
+  const [paymentType, setPaymentType] = useState('cash'); // 'cash', 'upi', 'bank'
+  const [selectedPaymentId, setSelectedPaymentId] = useState(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(null); // 'upi' or 'bank'
 
   useEffect(() => {
     refreshUser();
@@ -38,6 +41,20 @@ export default function SchedulePickupPage() {
     }
   }, [user, selectedAddressId]);
 
+  // Sync selectedPaymentId when paymentType changes
+  useEffect(() => {
+    if (paymentType === 'upi' || paymentType === 'bank') {
+      const methods = user?.paymentMethods?.filter(pm => pm.type === paymentType) || [];
+      if (methods.length > 0 && !selectedPaymentId) {
+        setSelectedPaymentId(methods[0]._id);
+      } else if (methods.length === 0) {
+        setSelectedPaymentId(null);
+      }
+    } else {
+      setSelectedPaymentId(null);
+    }
+  }, [paymentType, user, selectedPaymentId]);
+
   const days = getNextDays(7);
 
   const handleCreateOrder = async () => {
@@ -46,10 +63,26 @@ export default function SchedulePickupPage() {
       return;
     }
 
+    if (paymentType !== 'cash' && !selectedPaymentId) {
+      setError(`Please select a ${paymentType.toUpperCase()} payment method`);
+      return;
+    }
+
     setSubmitting(true);
     setError('');
     try {
       const selectedAddr = user.addresses.find(a => a._id === selectedAddressId);
+      
+      let finalPaymentMethodStr = 'Cash';
+      if (paymentType !== 'cash') {
+        const pm = user.paymentMethods.find(p => p._id === selectedPaymentId);
+        if (pm.type === 'upi') {
+          finalPaymentMethodStr = `UPI - ${pm.upiId}`;
+        } else if (pm.type === 'bank') {
+          finalPaymentMethodStr = `Bank - ${pm.bankName} (${pm.accountNumber.slice(-4)})`;
+        }
+      }
+
       const { data } = await orderService.createOrder({
         device: quote.device || {},
         priceBreakdown: quote.priceBreakdown || {},
@@ -57,7 +90,7 @@ export default function SchedulePickupPage() {
           ...selectedAddr, 
           date: formatDateISO(selectedDate), 
           timeSlot: selectedSlot, 
-          paymentMethod 
+          paymentMethod: finalPaymentMethodStr 
         },
       });
       navigate(`/order-confirmation/${data.orderId}`);
@@ -207,6 +240,122 @@ export default function SchedulePickupPage() {
                 </div>
               </div>
             </div>
+
+            {/* Step 3: Select Payment Method */}
+            <div className="bg-white rounded-[40px] border border-gray-100 p-8 sm:p-10 shadow-sm">
+              <div className="flex items-center gap-4 mb-10">
+                <div className="w-10 h-10 bg-[#F3F4F6] rounded-xl flex items-center justify-center text-[#111827] font-black">3</div>
+                <h3 className="text-xl font-black text-[#111827] uppercase tracking-wide">Select Payment Method</h3>
+              </div>
+
+              <div className="space-y-4">
+                {/* UPI */}
+                <div className={`rounded-[32px] border-2 p-6 transition-all ${paymentType === 'upi' ? 'border-[#16A34A] bg-[#F0FDF4]' : 'border-gray-50 bg-white hover:border-gray-200 cursor-pointer'}`}>
+                  <div className="flex items-center gap-6" onClick={() => setPaymentType('upi')}>
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm shrink-0 border ${paymentType === 'upi' ? 'bg-[#16A34A] text-white border-[#16A34A]' : 'bg-white text-gray-500 border-gray-100'}`}>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-black text-[#111827] text-lg">UPI</p>
+                      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mt-1">Add UPI ID</p>
+                    </div>
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${paymentType === 'upi' ? 'border-[#16A34A] bg-[#16A34A]' : 'border-gray-300'}`}>
+                      {paymentType === 'upi' && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
+                    </div>
+                  </div>
+                  
+                  {paymentType === 'upi' && (
+                    <div className="mt-6 pt-6 border-t border-[#16A34A]/20">
+                      <div className="space-y-3 mb-4">
+                        {user?.paymentMethods?.filter(pm => pm.type === 'upi').map(pm => (
+                          <label key={pm._id} className="flex items-center gap-3 cursor-pointer p-3 rounded-xl hover:bg-[#16A34A]/5 transition-colors">
+                            <input 
+                              type="radio" 
+                              name="upiId" 
+                              checked={selectedPaymentId === pm._id}
+                              onChange={() => setSelectedPaymentId(pm._id)}
+                              className="w-4 h-4 text-[#16A34A] focus:ring-[#16A34A] cursor-pointer"
+                            />
+                            <span className="font-bold text-[#111827] text-sm">{pm.upiId}</span>
+                          </label>
+                        ))}
+                      </div>
+                      <button 
+                        onClick={() => setShowPaymentModal('upi')}
+                        className="text-sm font-black text-[#16A34A] hover:text-[#15803D] flex items-center gap-2"
+                      >
+                        <span className="text-lg">+</span> Add New UPI ID
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Bank */}
+                <div className={`rounded-[32px] border-2 p-6 transition-all ${paymentType === 'bank' ? 'border-[#16A34A] bg-[#F0FDF4]' : 'border-gray-50 bg-white hover:border-gray-200 cursor-pointer'}`}>
+                  <div className="flex items-center gap-6" onClick={() => setPaymentType('bank')}>
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm shrink-0 border ${paymentType === 'bank' ? 'bg-[#16A34A] text-white border-[#16A34A]' : 'bg-white text-gray-500 border-gray-100'}`}>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-black text-[#111827] text-lg">Bank</p>
+                      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mt-1">Add Bank Details</p>
+                    </div>
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${paymentType === 'bank' ? 'border-[#16A34A] bg-[#16A34A]' : 'border-gray-300'}`}>
+                      {paymentType === 'bank' && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
+                    </div>
+                  </div>
+
+                  {paymentType === 'bank' && (
+                    <div className="mt-6 pt-6 border-t border-[#16A34A]/20">
+                      <div className="space-y-3 mb-4">
+                        {user?.paymentMethods?.filter(pm => pm.type === 'bank').map(pm => (
+                          <label key={pm._id} className="flex items-center gap-3 cursor-pointer p-3 rounded-xl hover:bg-[#16A34A]/5 transition-colors">
+                            <input 
+                              type="radio" 
+                              name="bankId" 
+                              checked={selectedPaymentId === pm._id}
+                              onChange={() => setSelectedPaymentId(pm._id)}
+                              className="w-4 h-4 text-[#16A34A] focus:ring-[#16A34A] cursor-pointer"
+                            />
+                            <div className="flex flex-col">
+                              <span className="font-bold text-[#111827] text-sm">{pm.bankName} - {pm.accountNumber.slice(-4)}</span>
+                              <span className="text-xs font-bold text-gray-500">{pm.accountName}</span>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                      <button 
+                        onClick={() => setShowPaymentModal('bank')}
+                        className="text-sm font-black text-[#16A34A] hover:text-[#15803D] flex items-center gap-2"
+                      >
+                        <span className="text-lg">+</span> Add New Bank Account
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Cash */}
+                <div 
+                  className={`rounded-[32px] border-2 p-6 transition-all ${paymentType === 'cash' ? 'border-[#16A34A] bg-[#F0FDF4]' : 'border-gray-50 bg-white hover:border-gray-200 cursor-pointer'}`}
+                  onClick={() => setPaymentType('cash')}
+                >
+                  <div className="flex items-center gap-6">
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm shrink-0 border ${paymentType === 'cash' ? 'bg-[#16A34A] text-white border-[#16A34A]' : 'bg-white text-gray-500 border-gray-100'}`}>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-black text-[#111827] text-lg">Cash</p>
+                      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mt-1">Cash Payment</p>
+                    </div>
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${paymentType === 'cash' ? 'border-[#16A34A] bg-[#16A34A]' : 'border-gray-300'}`}>
+                      {paymentType === 'cash' && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* End Step 3 */}
+
           </div>
 
           {/* Sidebar Summary */}
@@ -255,6 +404,11 @@ export default function SchedulePickupPage() {
       {/* Address Modal */}
       {showAddressModal && (
         <CreateAddressModal onClose={() => setShowAddressModal(false)} />
+      )}
+
+      {/* Payment Modal */}
+      {showPaymentModal && (
+        <CreatePaymentModal type={showPaymentModal} onClose={() => setShowPaymentModal(null)} />
       )}
     </div>
   );
@@ -456,6 +610,121 @@ function CreateAddressModal({ onClose }) {
             className="w-full mt-6 bg-[#16A34A] text-white font-black py-5 rounded-[24px] hover:bg-[#15803D] transition-all shadow-xl shadow-green-100 flex items-center justify-center gap-2"
           >
             {loading ? 'Saving...' : 'Save Address'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function CreatePaymentModal({ type, onClose }) {
+  const { refreshUser } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState(
+    type === 'upi' 
+      ? { type: 'upi', upiId: '' } 
+      : { type: 'bank', accountName: '', accountNumber: '', ifscCode: '', bankName: '' }
+  );
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await userService.addPaymentMethod(form);
+      await refreshUser();
+      onClose();
+    } catch (err) {
+      alert('Failed to add payment method');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-md" onClick={onClose} />
+      <div className="relative bg-white w-full max-w-md rounded-[40px] shadow-2xl p-10 max-h-[90vh] overflow-y-auto no-scrollbar">
+        <button onClick={onClose} className="absolute top-8 right-8 text-gray-400 hover:text-[#111827] transition-colors">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+
+        <div className="flex items-center gap-4 mb-10">
+          <div className="w-12 h-12 bg-[#F0FDF4] rounded-2xl flex items-center justify-center text-[#16A34A]">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <h2 className="text-2xl font-black text-[#111827]">
+            {type === 'upi' ? 'Add UPI ID' : 'Add Bank Details'}
+          </h2>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {type === 'upi' ? (
+            <div>
+              <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">UPI ID</label>
+              <input 
+                type="text" 
+                placeholder="e.g. 9876543210@ybl" 
+                value={form.upiId}
+                onChange={(e) => setForm({ ...form, upiId: e.target.value })}
+                className="w-full bg-white border-2 border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:outline-none focus:border-[#16A34A] transition-all"
+                required
+              />
+            </div>
+          ) : (
+            <>
+              <div>
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Account Holder Name</label>
+                <input 
+                  type="text" 
+                  placeholder="Name as per bank" 
+                  value={form.accountName}
+                  onChange={(e) => setForm({ ...form, accountName: e.target.value })}
+                  className="w-full bg-white border-2 border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:outline-none focus:border-[#16A34A] transition-all"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Account Number</label>
+                <input 
+                  type="text" 
+                  placeholder="Enter Account Number" 
+                  value={form.accountNumber}
+                  onChange={(e) => setForm({ ...form, accountNumber: e.target.value })}
+                  className="w-full bg-white border-2 border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:outline-none focus:border-[#16A34A] transition-all"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">IFSC Code</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. HDFC0001234" 
+                  value={form.ifscCode}
+                  onChange={(e) => setForm({ ...form, ifscCode: e.target.value })}
+                  className="w-full bg-white border-2 border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:outline-none focus:border-[#16A34A] transition-all"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Bank Name</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. HDFC Bank" 
+                  value={form.bankName}
+                  onChange={(e) => setForm({ ...form, bankName: e.target.value })}
+                  className="w-full bg-white border-2 border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:outline-none focus:border-[#16A34A] transition-all"
+                  required
+                />
+              </div>
+            </>
+          )}
+
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="w-full mt-6 bg-[#16A34A] text-white font-black py-5 rounded-[24px] hover:bg-[#15803D] transition-all shadow-xl shadow-green-100 flex items-center justify-center gap-2"
+          >
+            {loading ? 'Saving...' : 'Save Details'}
           </button>
         </form>
       </div>

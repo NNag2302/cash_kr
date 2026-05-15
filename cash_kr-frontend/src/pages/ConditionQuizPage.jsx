@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { deviceService } from '../services/device.service';
 import { useQuote } from '../hooks/useQuote';
 import { useAuth } from '../hooks/useAuth';
@@ -28,6 +28,8 @@ const AGE_OPTIONS = [
 export default function ConditionQuizPage() {
   const { brand, slug } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const storage = searchParams.get('storage');
   const { updateQuote } = useQuote();
   const { isAuthenticated, user } = useAuth();
 
@@ -59,18 +61,20 @@ export default function ConditionQuizPage() {
 
   useEffect(() => {
     deviceService.getDevice(slug).then(res => {
-      setDevice(res.data);
+      const dev = res.data;
+      setDevice(dev);
       setLoading(false);
-      setCurrentPrice(res.data.variants[0].basePrice);
+      const selectedVariant = dev.variants.find(v => v.storage === storage) || dev.variants[0];
+      setCurrentPrice(selectedVariant.basePrice);
     }).catch(() => setLoading(false));
-  }, [slug]);
+  }, [slug, storage]);
 
   // Recalculate price on selection change
   const [batteryHealth, setBatteryHealth] = useState('above80');
 
   useEffect(() => {
     if (!device) return;
-    const variant = device.variants[0]; // For now using first variant
+    const variant = device.variants.find(v => v.storage === storage) || device.variants[0];
     
     // Map UI selections to price calculator keys
     const result = calculatePrice({
@@ -99,7 +103,7 @@ export default function ConditionQuizPage() {
         brand: device.brand, 
         modelName: device.modelName, 
         slug: device.slug,
-        storage: device.variants[0].storage,
+        storage: storage || device.variants[0].storage,
         deviceAge: deviceAge,
         hasScreenIssue: hasScreenIssue,
         screenIssues: screenIssues,
@@ -150,7 +154,7 @@ export default function ConditionQuizPage() {
                 <div className="flex flex-col sm:flex-row items-center gap-10">
                   <div className="w-40 h-40 bg-gray-50 rounded-[32px] flex items-center justify-center p-6">
                     <img 
-                      src={device.variants[0].image || "https://img.freepik.com/free-photo/mobile-phone-with-blank-screen_23-2148151433.jpg"} 
+                      src={device.imageUrl || "https://img.freepik.com/free-photo/mobile-phone-with-blank-screen_23-2148151433.jpg"} 
                       alt={device.modelName}
                       className="max-h-full object-contain"
                     />
@@ -158,7 +162,7 @@ export default function ConditionQuizPage() {
                   <div className="flex-1 text-center sm:text-left">
                     <span className="text-[#16A34A] text-sm font-black uppercase tracking-wider mb-2 block">Offer ready — instant payout</span>
                     <h1 className="text-2xl sm:text-3xl font-black text-[#111827] mb-4">
-                      {device.modelName} ({device.variants[0].storage})
+                      {device.modelName} ({storage || device.variants[0].storage})
                     </h1>
                     <div className="flex items-center justify-center sm:justify-start gap-4 mb-6">
                       <span className="text-5xl font-black text-[#111827]">{formatCurrency(currentPrice)}</span>
@@ -319,7 +323,7 @@ export default function ConditionQuizPage() {
               <div>
                 <p className="text-[#16A34A] text-xs font-bold uppercase tracking-wider mb-1">Evaluating</p>
                 <h1 className="text-2xl font-black text-[#111827]">
-                  {device.modelName} <span className="text-gray-400 font-medium">({device.variants[0].storage} / {device.variants[0].ram || '8 GB'})</span>
+                  {device.modelName} <span className="text-gray-400 font-medium">({storage || device.variants[0].storage})</span>
                 </h1>
               </div>
             </div>

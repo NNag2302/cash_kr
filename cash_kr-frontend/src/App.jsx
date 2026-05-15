@@ -10,6 +10,7 @@ import Login from './pages/Login.jsx';
 import SignUp from './pages/SignUp.jsx';
 import BrandSelectionPage from './pages/BrandSelectionPage.jsx';
 import ModelSelectionPage from './pages/ModelSelectionPage.jsx';
+import VariantSelectionPage from './pages/VariantSelectionPage.jsx';
 import ConditionQuizPage from './pages/ConditionQuizPage.jsx';
 import SchedulePickupPage from './pages/SchedulePickupPage.jsx';
 import OrderConfirmationPage from './pages/OrderConfirmationPage.jsx';
@@ -28,7 +29,8 @@ function App() {
           <Route path="/signup" element={<SignUp />} />
           <Route path="/sell-old-mobile-phones/brand" element={<BrandSelectionPage />} />
           <Route path="/sell-old-mobile-phones/:brand" element={<ModelSelectionPage />} />
-          <Route path="/sell-old-mobile-phones/:brand/:slug" element={<ConditionQuizPage />} />
+          <Route path="/sell-old-mobile-phones/:brand/:slug" element={<VariantSelectionPage />} />
+          <Route path="/sell-old-mobile-phones/:brand/:slug/quiz" element={<ConditionQuizPage />} />
           <Route path="/schedule-pickup" element={<ProtectedRoute><SchedulePickupPage /></ProtectedRoute>} />
           <Route path="/order-confirmation/:orderId" element={<ProtectedRoute><OrderConfirmationPage /></ProtectedRoute>} />
           <Route path="/orders/:orderId" element={<ProtectedRoute><OrderTrackingPage /></ProtectedRoute>} />

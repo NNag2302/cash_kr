@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
-import { createOrder, getUserOrders, getOrderById, cancelOrder, rescheduleOrder } from '../controllers/order.controller.js';
+import { createOrder, getUserOrders, getOrderById, cancelOrder, rescheduleOrder, updateOrderPaymentMethod } from '../controllers/order.controller.js';
 import auth from '../middleware/auth.js';
 
 const router = Router();
@@ -24,5 +24,6 @@ router.get('/', getUserOrders);
 router.get('/:orderId', getOrderById);
 router.patch('/:orderId/cancel', cancelOrder);
 router.patch('/:orderId/reschedule', rescheduleOrder);
+router.patch('/:orderId/payment', updateOrderPaymentMethod);
 
 export default router;

@@ -113,3 +113,27 @@ export const rescheduleOrder = async (req, res, next) => {
     next(error);
   }
 };
+
+export const updateOrderPaymentMethod = async (req, res, next) => {
+  try {
+    const { orderId } = req.params;
+    const { paymentMethod } = req.body;
+
+    const order = await Order.findOne({ orderId });
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    if (order.userId.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    order.pickup.paymentMethod = paymentMethod;
+    await order.save();
+
+    res.json({ message: 'Payment method updated successfully', orderId: order.orderId });
+  } catch (error) {
+    next(error);
+  }
+};

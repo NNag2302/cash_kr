@@ -99,7 +99,7 @@ const devices = [
 
   {
     category: 'mobile', brand: 'Apple', modelName: 'iPhone 17 Pro Max',
-    slug: 'apple-iphone-17-pro-max', imageUrl: '',
+    slug: 'apple-iphone-17-pro-max', imageUrl: 'https://www.cashkr.com/_next/image?url=https%3A%2F%2Fckstorage.in-maa-1.linodeobjects.com%2FProducts%2FMobiles%2FApple%20iPhone%2016%20Pro%20Max_f45dc24f&w=828&q=75',
     variants: [
       { storage: '256GB', basePrice: 100000 },
       { storage: '512GB', basePrice: 108000 },
