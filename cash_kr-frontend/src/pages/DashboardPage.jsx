@@ -406,14 +406,37 @@ function ProfileTab({ user, onUpdateProfile }) {
 
 function OrdersTab({ orders, setSelectedReportOrder, onCancel }) {
   const navigate = useNavigate();
+  const [categoryFilter, setCategoryFilter] = useState('All');
+
+  const filteredOrders = orders.filter(order => {
+    if (categoryFilter === 'All') return true;
+    const isLaptop = order.device?.category === 'laptop';
+    return categoryFilter === 'Laptop' ? isLaptop : !isLaptop;
+  });
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-[#111827]">Check the status of orders</h2>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h2 className="text-xl font-bold text-[#111827]">Check the status of orders</h2>
+          <p className="text-sm text-gray-500 mt-1">Manage and track your device sales</p>
+        </div>
+        
+        {/* Category Filter */}
+        <div className="flex bg-gray-50 p-1 rounded-xl border border-gray-100 shrink-0">
+          {['All', 'Mobile', 'Laptop'].map(cat => (
+            <button 
+              key={cat}
+              onClick={() => setCategoryFilter(cat)}
+              className={`px-5 py-2 rounded-lg text-xs font-black transition-all ${categoryFilter === cat ? 'bg-white text-[#16A34A] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {orders.length === 0 ? (
+      {filteredOrders.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center bg-gray-50/50 rounded-[40px] border border-dashed border-gray-200">
           <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm">
             <IconOrders />
@@ -423,8 +446,14 @@ function OrdersTab({ orders, setSelectedReportOrder, onCancel }) {
       ) : (
         <div className="space-y-6">
           <div className="grid grid-cols-1 gap-6">
-            {orders.map((order) => (
+            {filteredOrders.map((order) => (
                <div key={order.orderId} className="bg-white border border-gray-100 rounded-[40px] p-8 shadow-sm hover:shadow-md transition-all relative overflow-hidden group">
+                  {/* Category Tag */}
+                  <div className="absolute top-0 right-10">
+                    <div className={`px-4 py-1.5 rounded-b-xl text-[9px] font-black uppercase tracking-widest ${order.device?.category === 'laptop' ? 'bg-blue-50 text-blue-500' : 'bg-green-50 text-green-500'}`}>
+                      {order.device?.category || 'Mobile'}
+                    </div>
+                  </div>
                   {/* Top Status Bar */}
                   <div className="flex items-center justify-between mb-8 pb-8 border-b border-gray-50">
                     <div className="flex items-center gap-4">
@@ -458,7 +487,12 @@ function OrdersTab({ orders, setSelectedReportOrder, onCancel }) {
                         {new Date(order.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase()}
                       </p>
                       <h3 className="text-xl font-black text-[#111827] mb-1">{order.device?.modelName}</h3>
-                      <p className="text-sm font-bold text-gray-400">{order.device?.storage} / {order.device?.ram || '8 GB'}</p>
+                      <p className="text-sm font-bold text-gray-400">
+                        {order.device?.category === 'laptop' 
+                          ? `${order.device?.processor} / ${order.device?.ram} / ${order.device?.storage}`
+                          : `${order.device?.storage} / ${order.device?.ram || '8 GB'}`
+                        }
+                      </p>
                     </div>
 
                     <div className="flex items-center gap-12">
@@ -956,7 +990,19 @@ function DeviceEvaluationReportModal({ order, onClose }) {
     'vibration': 'Vibration Problem',
     'charging': 'Charging Problem',
     'battery': 'Battery/Service Problem',
-    'motherboard': 'Motherboard Problem'
+    'motherboard': 'Motherboard Problem',
+    'screenChanged': 'Display Replaced',
+    'keyboard': 'Keyboard Defect',
+    'trackpad': 'Trackpad Defect',
+    'speakers': 'Speaker Defect',
+    'biometric': 'Biometric/Fingerprint Defect',
+    'ports': 'USB/Charging Port Defect',
+    'cdDrive': 'CD Drive Defect',
+    'webcam': 'Webcam Defect',
+    'chargerIssue': 'Charger Defect',
+    'hardDisk': 'Hard Disk Defect',
+    'displayIssue': 'Display Lines/Spots',
+    'hinge': 'Hinge/Body Crack'
   };
 
   const techIssues = functionalIssues.filter(id => !['back_glass', 'display_changed', 'bend', 'buttons'].includes(id));
@@ -985,34 +1031,53 @@ function DeviceEvaluationReportModal({ order, onClose }) {
 
             <div className="space-y-4">
               <ReportRow label="Device Age" value={order.device?.deviceAge || '3 - 6 Months'} />
-              <ReportRow label="Screen Condition" value={order.device?.hasScreenIssue ? 'Faulty Screen' : 'Good Condition'} />
-              <ReportRow label="Body Condition" value={order.device?.bodyCondition || 'Average'} isAlert={order.device?.bodyCondition !== 'Flawless'} />
+              {order.device?.category === 'laptop' ? (
+                <>
+                  <ReportRow label="Processor" value={order.device?.processor || 'N/A'} />
+                  <ReportRow label="Generation" value={order.device?.generation || 'N/A'} />
+                  <ReportRow label="RAM" value={order.device?.ram || 'N/A'} />
+                  <ReportRow label="Storage" value={order.device?.storage || 'N/A'} />
+                  <ReportRow label="Graphics" value={order.device?.hasDedicatedGpu ? order.device?.graphicsCard : 'Integrated'} />
+                  <ReportRow label="Screen Size" value={order.device?.screenSize || 'N/A'} />
+                  <ReportRow label="Touch Screen" value={order.device?.hasTouchscreen ? 'Yes' : 'No'} />
+                  <ReportRow label="Accessories" value={Array.isArray(order.device?.accessories) ? order.device.accessories.join(', ') : order.device?.accessories || 'None'} />
+                </>
+              ) : (
+                <ReportRow label="Screen Condition" value={order.device?.hasScreenIssue ? 'Faulty Screen' : 'Good Condition'} />
+              )}
+              <ReportRow 
+                label="Body Condition" 
+                value={order.device?.bodyCondition || 'Average'} 
+                isAlert={!['Flawless', 'Good', 'good', 'likenew'].includes(order.device?.bodyCondition)} 
+              />
               <ReportRow label="Functional Issues" value={order.device?.functionalIssues?.length > 0 ? 'Has Issues' : 'No Issues'} isAlert={order.device?.functionalIssues?.length > 0} />
               <ReportRow label="Power Issue" value="Powers On" />
             </div>
           </div>
 
-          {/* Physical Condition Section */}
-          <div className="space-y-6">
-            <h3 className="text-lg font-black text-[#111827]">Physical Condition</h3>
-            <div className="space-y-3">
-               {physicalIssues.length === 0 && screenIssues.length === 0 && (
-                 <p className="text-sm font-bold text-gray-400 italic">No physical issues reported</p>
-               )}
-               {screenIssues.map(issue => (
-                 <div key={issue} className="flex items-center gap-3">
-                   <div className="w-1.5 h-1.5 rounded-full bg-[#EF4444]" />
-                   <p className="text-sm font-black text-[#EF4444]">{issue}</p>
-                 </div>
-               ))}
-               {physicalIssues.map(id => (
-                 <div key={id} className="flex items-center gap-3">
-                   <div className="w-1.5 h-1.5 rounded-full bg-[#EF4444]" />
-                   <p className="text-sm font-black text-[#EF4444]">{issueLabels[id] || id}</p>
-                 </div>
-               ))}
+          {/* Physical Condition Section (Mobile Only) */}
+          {order.device?.category !== 'laptop' && (
+            <div className="space-y-6">
+              <h3 className="text-lg font-black text-[#111827]">Physical Condition</h3>
+              <div className="space-y-3">
+                 {physicalIssues.length === 0 && screenIssues.length === 0 && (
+                   <p className="text-sm font-bold text-gray-400 italic">No physical issues reported</p>
+                 )}
+                 {screenIssues.map(issue => (
+                   <div key={issue} className="flex items-center gap-3">
+                     <div className="w-1.5 h-1.5 rounded-full bg-[#EF4444]" />
+                     <p className="text-sm font-black text-[#EF4444]">{issue}</p>
+                   </div>
+                 ))}
+                 {physicalIssues.map(id => (
+                   <div key={id} className="flex items-center gap-3">
+                     <div className="w-1.5 h-1.5 rounded-full bg-[#EF4444]" />
+                     <p className="text-sm font-black text-[#EF4444]">{issueLabels[id] || id}</p>
+                   </div>
+                 ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Technical Condition Section */}
           <div className="space-y-6">

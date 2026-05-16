@@ -66,3 +66,18 @@ export const BRANDS = [
     logo: "https://upload.wikimedia.org/wikipedia/commons/a/aa/IQOO_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=original",
   },
 ];
+
+export const LAPTOP_BRANDS = [
+  { name: 'Apple', color: '#555', models: 10 },
+  { name: 'Dell', color: '#007DB8', models: 8 },
+  { name: 'HP', color: '#0096D6', models: 7 },
+  { name: 'Lenovo', color: '#E2231A', models: 7 },
+  { name: 'Asus', color: '#00549E', models: 7 },
+  { name: 'Acer', color: '#83B81A', models: 5 },
+  { name: 'Microsoft', color: '#737373', models: 3 },
+  { name: 'MSI', color: '#FF0000', models: 4 },
+  { name: 'Razer', color: '#44D62C', models: 3 },
+  { name: 'Samsung', color: '#1428a0', models: 0 },
+  { name: 'LG', color: '#A50034', models: 0 },
+  { name: 'Huawei', color: '#CF0A2C', models: 0 },
+];

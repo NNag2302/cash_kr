@@ -14,26 +14,41 @@ const orderSchema = new mongoose.Schema({
     default: () => 'ORD-' + crypto.randomBytes(3).toString('hex').toUpperCase(),
   },
   device: {
+    category: String,        // 'mobile' or 'laptop'
     brand: String,
     modelName: String,
     slug: String,
     storage: String,
+    // Mobile fields
     deviceAge: String,
     hasScreenIssue: Boolean,
     screenIssues: [String],
     hasBodyIssue: Boolean,
     bodyCondition: String,
     hasOtherIssues: Boolean,
-    functionalIssues: [String],
     batteryHealth: String,
-    accessories: [String],
+    // Laptop fields
+    processor: String,
+    generation: String,
+    graphicsCard: String,
+    hasDedicatedGpu: Boolean,
+    hasTouchscreen: Boolean,
+    screenSize: String,
+    ram: String,
+    storageType: String,
+    yearOfPurchase: String,
+    screenCondition: String,
+    // Shared
+    functionalIssues: [String],
+    accessories: mongoose.Schema.Types.Mixed, // String for laptop, [String] for mobile
   },
   priceBreakdown: {
     basePrice: { type: Number, default: 0 },
+    ageAdjustment: { type: Number, default: 0 },      // laptop only
     conditionAdjustment: { type: Number, default: 0 },
     screenAdjustment: { type: Number, default: 0 },
     functionalDeduction: { type: Number, default: 0 },
-    batteryDeduction: { type: Number, default: 0 },
+    batteryDeduction: { type: Number, default: 0 },    // mobile only
     accessoriesBonus: { type: Number, default: 0 },
     finalPrice: { type: Number, default: 0 },
   },

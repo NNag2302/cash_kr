@@ -148,7 +148,12 @@ export default function OrderTrackingPage() {
              </div>
              <div className="flex-1 text-center md:text-left">
                 <h4 className="text-xl font-black text-[#111827] mb-1">{order.device?.modelName}</h4>
-                <p className="text-sm font-bold text-gray-400">( {order.device?.storage} / {order.device?.ram || '8 GB'} )</p>
+                <p className="text-sm font-bold text-gray-400">
+                  {order.device?.category === 'laptop' 
+                    ? `( ${order.device?.processor} / ${order.device?.ram} / ${order.device?.storage} )`
+                    : `( ${order.device?.storage} / ${order.device?.ram || '8 GB'} )`
+                  }
+                </p>
              </div>
              <div className="text-center md:text-right">
                 <p className="text-2xl font-black text-[#111827]">{formatCurrency(order.priceBreakdown?.finalPrice)}</p>
@@ -294,7 +299,19 @@ function DeviceEvaluationReportModal({ order, onClose }) {
     'vibration': 'Vibration Problem',
     'charging': 'Charging Problem',
     'battery': 'Battery/Service Problem',
-    'motherboard': 'Motherboard Problem'
+    'motherboard': 'Motherboard Problem',
+    'screenChanged': 'Display Replaced',
+    'keyboard': 'Keyboard Defect',
+    'trackpad': 'Trackpad Defect',
+    'speakers': 'Speaker Defect',
+    'biometric': 'Biometric/Fingerprint Defect',
+    'ports': 'USB/Charging Port Defect',
+    'cdDrive': 'CD Drive Defect',
+    'webcam': 'Webcam Defect',
+    'chargerIssue': 'Charger Defect',
+    'hardDisk': 'Hard Disk Defect',
+    'displayIssue': 'Display Lines/Spots',
+    'hinge': 'Hinge/Body Crack'
   };
 
   const techIssues = functionalIssues.filter(id => !['back_glass', 'display_changed', 'bend', 'buttons'].includes(id));
@@ -320,33 +337,53 @@ function DeviceEvaluationReportModal({ order, onClose }) {
             </div>
             <div className="space-y-4">
               <ReportRow label="Device Age" value={order.device?.deviceAge || '3 - 6 Months'} />
-              <ReportRow label="Screen Condition" value={order.device?.hasScreenIssue ? 'Faulty Screen' : 'Good Condition'} />
-              <ReportRow label="Body Condition" value={order.device?.bodyCondition || 'Average'} isAlert={order.device?.bodyCondition !== 'Flawless'} />
+              {order.device?.category === 'laptop' ? (
+                <>
+                  <ReportRow label="Processor" value={order.device?.processor || 'N/A'} />
+                  <ReportRow label="Generation" value={order.device?.generation || 'N/A'} />
+                  <ReportRow label="RAM" value={order.device?.ram || 'N/A'} />
+                  <ReportRow label="Storage" value={order.device?.storage || 'N/A'} />
+                  <ReportRow label="Graphics" value={order.device?.hasDedicatedGpu ? order.device?.graphicsCard : 'Integrated'} />
+                  <ReportRow label="Screen Size" value={order.device?.screenSize || 'N/A'} />
+                  <ReportRow label="Touch Screen" value={order.device?.hasTouchscreen ? 'Yes' : 'No'} />
+                  <ReportRow label="Accessories" value={Array.isArray(order.device?.accessories) ? order.device.accessories.join(', ') : order.device?.accessories || 'None'} />
+                </>
+              ) : (
+                <ReportRow label="Screen Condition" value={order.device?.hasScreenIssue ? 'Faulty Screen' : 'Good Condition'} />
+              )}
+              <ReportRow 
+                label="Body Condition" 
+                value={order.device?.bodyCondition || 'Average'} 
+                isAlert={!['Flawless', 'Good', 'good', 'likenew'].includes(order.device?.bodyCondition)} 
+              />
               <ReportRow label="Functional Issues" value={order.device?.functionalIssues?.length > 0 ? 'Has Issues' : 'No Issues'} isAlert={order.device?.functionalIssues?.length > 0} />
               <ReportRow label="Power Issue" value="Powers On" />
             </div>
           </div>
 
-          <div className="space-y-6">
-            <h3 className="text-lg font-black text-[#111827]">Physical Condition</h3>
-            <div className="space-y-3">
-               {physicalIssues.length === 0 && screenIssues.length === 0 && (
-                 <p className="text-sm font-bold text-gray-400 italic">No physical issues reported</p>
-               )}
-               {screenIssues.map(issue => (
-                 <div key={issue} className="flex items-center gap-3">
-                   <div className="w-1.5 h-1.5 rounded-full bg-[#EF4444]" />
-                   <p className="text-sm font-black text-[#EF4444]">{issue}</p>
-                 </div>
-               ))}
-               {physicalIssues.map(id => (
-                 <div key={id} className="flex items-center gap-3">
-                   <div className="w-1.5 h-1.5 rounded-full bg-[#EF4444]" />
-                   <p className="text-sm font-black text-[#EF4444]">{issueLabels[id] || id}</p>
-                 </div>
-               ))}
+          {/* Physical Condition Section (Mobile Only) */}
+          {order.device?.category !== 'laptop' && (
+            <div className="space-y-6">
+              <h3 className="text-lg font-black text-[#111827]">Physical Condition</h3>
+              <div className="space-y-3">
+                 {physicalIssues.length === 0 && screenIssues.length === 0 && (
+                   <p className="text-sm font-bold text-gray-400 italic">No physical issues reported</p>
+                 )}
+                 {screenIssues.map(issue => (
+                   <div key={issue} className="flex items-center gap-3">
+                     <div className="w-1.5 h-1.5 rounded-full bg-[#EF4444]" />
+                     <p className="text-sm font-black text-[#EF4444]">{issue}</p>
+                   </div>
+                 ))}
+                 {physicalIssues.map(id => (
+                   <div key={id} className="flex items-center gap-3">
+                     <div className="w-1.5 h-1.5 rounded-full bg-[#EF4444]" />
+                     <p className="text-sm font-black text-[#EF4444]">{issueLabels[id] || id}</p>
+                   </div>
+                 ))}
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="space-y-6">
             <h3 className="text-lg font-black text-[#111827]">Technical Condition</h3>

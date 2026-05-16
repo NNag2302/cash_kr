@@ -11,6 +11,10 @@ export function QuoteProvider({ children }) {
     functionalIssues: [],
     accessories: null,
     priceBreakdown: null,
+    // Laptop-specific fields
+    ram: null,
+    storageType: null,
+    yearBracket: null,
   });
 
   const updateQuote = (updates) => {
@@ -22,6 +26,7 @@ export function QuoteProvider({ children }) {
       device: null, storage: null, condition: null,
       screenCondition: null, functionalIssues: [],
       accessories: null, priceBreakdown: null,
+      ram: null, storageType: null, yearBracket: null,
     });
   };
 

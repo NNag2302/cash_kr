@@ -18,6 +18,12 @@ import OrderTrackingPage from './pages/OrderTrackingPage.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 
+// Laptop Pages
+import LaptopBrandSelectionPage from './pages/LaptopBrandSelectionPage.jsx';
+import LaptopModelSelectionPage from './pages/LaptopModelSelectionPage.jsx';
+import LaptopModelDetailsPage from './pages/LaptopModelDetailsPage.jsx';
+import LaptopConditionQuizPage from './pages/LaptopConditionQuizPage.jsx';
+
 function App() {
   return (
     <>
@@ -27,10 +33,17 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
+          {/* Mobile flow */}
           <Route path="/sell-old-mobile-phones/brand" element={<BrandSelectionPage />} />
           <Route path="/sell-old-mobile-phones/:brand" element={<ModelSelectionPage />} />
           <Route path="/sell-old-mobile-phones/:brand/:slug" element={<VariantSelectionPage />} />
           <Route path="/sell-old-mobile-phones/:brand/:slug/quiz" element={<ConditionQuizPage />} />
+          {/* Laptop flow */}
+          <Route path="/sell-old-laptops/brand" element={<LaptopBrandSelectionPage />} />
+          <Route path="/sell-old-laptops/:brand" element={<LaptopModelSelectionPage />} />
+          <Route path="/sell-old-laptops/:brand/:slug" element={<LaptopModelDetailsPage />} />
+          <Route path="/sell-old-laptops/:brand/:slug/quiz" element={<LaptopConditionQuizPage />} />
+          {/* Shared */}
           <Route path="/schedule-pickup" element={<ProtectedRoute><SchedulePickupPage /></ProtectedRoute>} />
           <Route path="/order-confirmation/:orderId" element={<ProtectedRoute><OrderConfirmationPage /></ProtectedRoute>} />
           <Route path="/orders/:orderId" element={<ProtectedRoute><OrderTrackingPage /></ProtectedRoute>} />

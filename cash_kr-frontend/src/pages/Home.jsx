@@ -74,10 +74,10 @@ const AppStoreIcon = () => (
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
 const DEVICE_CATEGORIES = [
-  { icon: <MobileIcon />, label: "Mobile", sub: "iPhone, Android", desc: "Sell old mobile phone for instant cash" },
-  { icon: <TabletIcon />, label: "Tablet", sub: "iPad, Tab", desc: "Sell old tablet for instant cash" },
-  { icon: <LaptopIcon />, label: "Laptop", sub: "Instant Quote", desc: "Sell old laptop for instant cash" },
-  { icon: <MacIcon />, label: "Mac", sub: "MacBook, iMac", desc: "Sell old MacBook or iMac for instant cash" },
+  { icon: <MobileIcon />, label: "Mobile", sub: "iPhone, Android", desc: "Sell old mobile phone for instant cash", to: "/sell-old-mobile-phones/brand" },
+  { icon: <TabletIcon />, label: "Tablet", sub: "iPad, Tab", desc: "Sell old tablet for instant cash", to: "/sell-old-mobile-phones/brand" }, // Assuming same for now
+  { icon: <LaptopIcon />, label: "Laptop", sub: "Instant Quote", desc: "Sell old laptop for instant cash", to: "/sell-old-laptops/brand" },
+  { icon: <MacIcon />, label: "Mac", sub: "MacBook, iMac", desc: "Sell old MacBook or iMac for instant cash", to: "/sell-old-laptops/brand" },
 ];
 
 const HOW_STEPS = [
@@ -283,7 +283,7 @@ export default function HomePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
               {DEVICE_CATEGORIES.map((cat) => (
                 <Link 
-                  to={`/sell-old-mobile-phones/brand`} 
+                  to={cat.to || "/sell-old-mobile-phones/brand"} 
                   key={cat.label} 
                   className="group flex items-center gap-4 bg-white border border-gray-100 rounded-2xl p-5 hover:border-primary hover:shadow-xl hover:-translate-y-1 transition-all no-underline"
                 >
