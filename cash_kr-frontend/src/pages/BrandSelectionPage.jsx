@@ -14,6 +14,7 @@ const MobileIcon = () => (
 export default function BrandSelectionPage() {
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [failedLogos, setFailedLogos] = useState({});
 
   useEffect(() => {
     deviceService.getBrands('mobile').then(res => {
@@ -21,7 +22,12 @@ export default function BrandSelectionPage() {
       setLoading(false);
     }).catch(() => {
       // Fallback to constants
-      setBrands(BRANDS.map(b => ({ brand: b.name, modelCount: b.models })));
+      setBrands(BRANDS.map(b => ({ 
+        brand: b.name, 
+        modelCount: b.models,
+        logo: b.logo,
+        color: b.color
+      })));
       setLoading(false);
     });
   }, []);
@@ -29,6 +35,15 @@ export default function BrandSelectionPage() {
   const getBrandColor = (name) => {
     const b = BRANDS.find(br => br.name.toLowerCase() === name.toLowerCase());
     return b?.color || '#0565E6';
+  };
+
+  const getBrandLogo = (name) => {
+    const b = BRANDS.find(br => br.name.toLowerCase() === name.toLowerCase());
+    return b?.logo || null;
+  };
+
+  const handleLogoError = (brandName) => {
+    setFailedLogos(prev => ({...prev, [brandName]: true}));
   };
 
   if (loading) return <Loader />;
@@ -60,10 +75,19 @@ export default function BrandSelectionPage() {
             className="group flex flex-col items-center gap-3 bg-white rounded-2xl border border-border p-5 sm:p-6 transition-all duration-200 hover:border-primary hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(5,101,230,0.12)] no-underline"
           >
             <div
-              className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center text-white text-xl sm:text-2xl font-extrabold transition-transform duration-200 group-hover:scale-110"
+              className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center text-white text-xl sm:text-2xl font-extrabold transition-transform duration-200 group-hover:scale-110 overflow-hidden"
               style={{ backgroundColor: getBrandColor(b.brand) }}
             >
-              {b.brand[0]}
+              {(!failedLogos[b.brand] && getBrandLogo(b.brand)) ? (
+                <img 
+                  src={getBrandLogo(b.brand)} 
+                  alt={b.brand}
+                  className="w-full h-full object-contain p-2"
+                  onError={() => handleLogoError(b.brand)}
+                />
+              ) : (
+                b.brand[0]
+              )}
             </div>
             <div className="text-center">
               <p className="text-sm sm:text-base font-bold text-text-primary">{b.brand}</p>
