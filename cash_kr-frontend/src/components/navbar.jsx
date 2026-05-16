@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
 const NAV_ITEMS = [
-  { label: "Mobile", hasDropdown: false },
+  { label: "Mobile", hasDropdown: false, to: "/sell-old-mobile-phones/brand" },
   { label: "Tablet", hasDropdown: false },
   { label: "Laptop", hasDropdown: false },
   { label: "Mac", hasDropdown: false },
@@ -54,6 +54,7 @@ export default function Navbar() {
   const auth = useAuth();
   const isLoggedIn = auth?.isAuthenticated;
   const userName = auth?.user?.name;
+  const navigate = useNavigate();
 
   const handleMobileExpand = (label) => {
     setMobileExpanded((prev) => (prev === label ? null : label));
@@ -123,7 +124,12 @@ export default function Navbar() {
             <button 
               className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap
                 ${activeItem === item.label ? 'text-text-primary font-bold bg-gray-50' : 'text-gray-500 hover:text-primary hover:bg-primary-light'}`}
-              onClick={() => setActiveItem(item.label)}
+              onClick={() => {
+                setActiveItem(item.label);
+                if (item.to) {
+                  navigate(item.to);
+                }
+              }}
             >
               {item.label}
               {item.hasDropdown && (
@@ -167,6 +173,9 @@ export default function Navbar() {
                     if (!item.hasDropdown) {
                       setActiveItem(item.label);
                       setMobileMenuOpen(false);
+                      if (item.to) {
+                        navigate(item.to);
+                      }
                     } else {
                       handleMobileExpand(item.label);
                     }
